@@ -13,7 +13,67 @@ Link to the full blog post with tutorial : https://divamgupta.com/image-segmenta
   <img src="https://raw.githubusercontent.com/sunshineatnoon/Paper-Collection/master/images/FCN1.png" width="50%" >
 </p>
 
-## Our Other Repositories 
+## Updates to original 
+- Added accuracy and loss plot functions to 'keras_segementation/metrics.py'
+- Added an 'output_directory' parameter in 'keras_segementation/train.py' to output accuracy and loss plots to a specificed directory
+
+## Using the python module (updated)
+
+You can import keras_segmentation in  your python script and use the API
+
+```python
+import numpy as np 
+import keras_segmentation
+import os
+import time
+import sys
+
+start_time = time.time()
+
+#paths
+input_dir = '/data/' #directory with all the input images and annotations
+img_train_dir = os.path.join(input_dir, 'train_images/')
+ann_train_dir = os.path.join(input_dir, 'train_annotations/')
+img_val_dir = os.path.join(input_dir, 'val_images/')
+ann_val_dir = os.path.join(input_dir, 'val_annotations/')
+img_test_dir = os.path.join(input_dir, 'test_images/')
+ann_test_dir = os.path.join(input_dir, 'test_annotations/')
+out_dir = '/output/' #directory to store all the image outputs
+
+num_classes = 3     #number of classes in the images
+model = keras_segmentation.models.unet.vgg_unet(n_classes=num_classes,  input_height=416, input_width=608  ) #for vgg16 encoder and unet network
+
+model.train( 
+    train_images =  img_train_dir,
+    train_annotations = ann_train_dir,
+    validate=True,
+    val_images = img_val_dir,
+    val_annotations = ann_val_dir,
+    epochs = 5,
+    optimizer_name = 'SGD',
+    output_directory = out_dir
+    )
+    
+#Make a list of the test images and annotations
+test_img = []
+test_ann = []
+    
+for img_path in os.listdir(img_test_dir):
+    test_img.append(os.path.join(img_test_dir, img_path))
+        
+for img_path in os.listdir(ann_test_dir):
+    test_ann.append(os.path.join(ann_test_dir, img_path))
+    
+#evaluate the test images (which prints the IoUs)
+model.evaluate_segmentation(inp_images = test_img, annotations = test_ann)
+
+#predict the segmentations in test images, images saved in out_dir
+out = model.predict_multiple(inp_dir = img_test_dir, out_dir = out_dir)
+
+print("Total runtime: {}".format(time.time() - start_time))
+)
+```
+## Other Repositories 
 - [Attention based Language Translation in Keras](https://github.com/divamgupta/attention-translation-keras)
 - [Ladder Network in Keras](https://github.com/divamgupta/ladder_network_keras)  model achives 98% test accuracy on MNIST with just 100 labeled examples
 
