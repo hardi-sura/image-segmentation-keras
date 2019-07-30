@@ -1,10 +1,9 @@
-
 import numpy as np
 import cv2
 import glob
 import itertools
 import os
-from tqdm import tqdm
+#from tqdm import tqdm
 
 from ..models.config import IMAGE_ORDERING
 from .augmentation import augment_seg
@@ -17,23 +16,18 @@ class_colors = [  ( random.randint(0,255),random.randint(0,255),random.randint(0
 
 
 def get_pairs_from_paths( images_path , segs_path ):
-	images = glob.glob( os.path.join(images_path,"*.jpg")  ) + glob.glob( os.path.join(images_path,"*.png")  ) +  glob.glob( os.path.join(images_path,"*.jpeg")  )
-	segmentations  =  glob.glob( os.path.join(segs_path,"*.png")  ) 
-
-	segmentations_d = dict( zip(segmentations,segmentations ))
-
-	ret = []
-
-	for im in images:
-		seg_bnme = os.path.basename(im).replace(".jpg" , ".png").replace(".jpeg" , ".png")
-		seg = os.path.join( segs_path , seg_bnme  )
-		assert ( seg in segmentations_d ),  (im + " is present in "+images_path +" but "+seg_bnme+" is not found in "+segs_path + " . Make sure annotation image are in .png"  )
-		ret.append((im , seg) )
-
-	return ret
-
-
-
+    images = glob.glob(os.path.join(images_path,"*.JPG")) + glob.glob(os.path.join(images_path,"*.jpg")) + glob.glob( os.path.join(images_path,"*.png")) +  glob.glob( os.path.join(images_path,"*.jpeg"))
+    segmentations  =  glob.glob(os.path.join(segs_path,"*.png")) 
+    segmentations_d = dict(zip(segmentations,segmentations))
+    ret = []
+    
+    for im in images:
+    	seg_bnme = os.path.basename(im).replace(".jpg" , ".png").replace(".jpeg" , ".png").replace(".JPG" , ".png")
+    	seg = os.path.join( segs_path , seg_bnme  )
+    	assert ( seg in segmentations_d ),  (im + " is present in "+images_path +" but "+seg_bnme+" is not found in "+segs_path + " . Make sure annotation image are in .png")
+    	ret.append((im , seg) )
+    
+    return ret
 
 def get_image_arr( path , width , height , imgNorm="sub_mean" , odering='channels_first' ):
 
@@ -95,10 +89,11 @@ def get_segmentation_arr( path , nClasses ,  width , height , no_reshape=False )
 def verify_segmentation_dataset( images_path , segs_path , n_classes ):
 	
 	img_seg_pairs = get_pairs_from_paths( images_path , segs_path )
-
+	
 	assert len(img_seg_pairs)>0 , "Dataset looks empty or path is wrong "
 	
-	for im_fn , seg_fn in tqdm(img_seg_pairs) :
+	#for im_fn , seg_fn in tqdm(img_seg_pairs) :
+	for im_fn , seg_fn in img_seg_pairs:
 		img = cv2.imread( im_fn )
 		seg = cv2.imread( seg_fn )
 
@@ -131,4 +126,3 @@ def image_segmentation_generator( images_path , segs_path ,  batch_size,  n_clas
 			Y.append( get_segmentation_arr( seg , n_classes , output_width , output_height )  )
 
 		yield np.array(X) , np.array(Y)
-
