@@ -10,7 +10,7 @@ from ..train import train
 from ..predict import predict , predict_multiple , evaluate
 
 
-from tqdm import tqdm
+#from tqdm import tqdm
 
 
 
@@ -24,6 +24,7 @@ def transfer_weights( m1 , m2 , verbose=True ):
 
 	if verbose:
 		print("Copying weights ")
+		#bar = tqdm(zip( m1.layers, m2.layers))
 		bar = tqdm(zip( m1.layers, m2.layers))
 	else:
 		bar = zip( m1.layers, m2.layers)
@@ -104,9 +105,4 @@ def get_segmentation_model( input , output ):
 	model.predict_multiple = MethodType( predict_multiple , model )
 	model.evaluate_segmentation = MethodType( evaluate , model )
 
-
-	return model 
-
-
-
-
+	return model
