@@ -1,7 +1,11 @@
+import matplotlib 
+matplotlib.use('Agg') # pylint: disable=multiple-statements
+import matplotlib.pyplot as plt # plotting
 import argparse
 import json
 from .data_utils.data_loader import image_segmentation_generator , verify_segmentation_dataset
 from .models import model_from_name
+from . import  metrics 
 import os
 import six
 
@@ -15,9 +19,6 @@ def find_latest_checkpoint( checkpoints_path ):
 			return r 
 
 		ep += 1
-
-
-
 
 def train( model  , 
 		train_images  , 
@@ -36,7 +37,8 @@ def train( model  ,
 		auto_resume_checkpoint=False ,
 		load_weights=None ,
 		steps_per_epoch=512,
-		optimizer_name='adadelta' 
+		optimizer_name='adadelta',
+		output_directory=None
 	):
 
 
@@ -101,23 +103,31 @@ def train( model  ,
 
 
 	if not validate:
-		for ep in range( epochs ):
-			print("Starting Epoch " , ep )
-			model.fit_generator( train_gen , steps_per_epoch  , epochs=1 )
-			if not checkpoints_path is None:
-				model.save_weights( checkpoints_path + "." + str( ep ) )
-				print("saved " , checkpoints_path + ".model." + str( ep ) )
-			print("Finished Epoch" , ep )
+	    if not checkpoints_path is None:
+	        for ep in range( epochs ):
+	            print("Starting Epoch {}".format(ep))
+	            model.fit_generator( train_gen, steps_per_epoch, epochs=1, use_multiprocessing=True)
+	            model.save_weights( checkpoints_path + "." + str( ep ) )
+	            print("saved " , checkpoints_path + ".model." + str( ep ) )
+	            print("Finished Epoch {}".format(ep))
+	    else:
+	        print("Starting")
+	        history = model.fit_generator( train_gen, steps_per_epoch, epochs=epochs, use_multiprocessing=True)
+	        metrics.plot_accuracy(history=history, path=output_directory, validate= validate)
+	        metrics.plot_loss(history=history, path=output_directory, validate= validate)
+	        print("Finished")
+	        
 	else:
-		for ep in range( epochs ):
-			print("Starting Epoch " , ep )
-			model.fit_generator( train_gen , steps_per_epoch  , validation_data=val_gen , validation_steps=200 ,  epochs=1 )
-			if not checkpoints_path is None:
-				model.save_weights( checkpoints_path + "." + str( ep )  )
-				print("saved " , checkpoints_path + ".model." + str( ep ) )
-			print("Finished Epoch" , ep )
-
-
-
-
-
+	    if not checkpoints_path is None:
+	        for ep in range( epochs ):
+	            print("Starting Epoch {}".format(ep))
+	            model.fit_generator( train_gen, steps_per_epoch, validation_data=val_gen, validation_steps=200, epochs=1, use_multiprocessing=True)
+	            model.save_weights( checkpoints_path + "." + str( ep ) )
+	            print("saved " , checkpoints_path + ".model." + str( ep ) )
+	            print("Finished Epoch {}".format(ep))
+	    else:
+	        print("Starting")
+	        history = model.fit_generator( train_gen, steps_per_epoch, validation_data=val_gen, validation_steps=200, epochs=epochs, use_multiprocessing=True)
+	        metrics.plot_accuracy(history=history, path=output_directory, validate= validate)
+	        metrics.plot_loss(history=history, path=output_directory, validate= validate)
+	        print("Finished")
