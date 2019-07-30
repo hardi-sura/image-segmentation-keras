@@ -5,8 +5,9 @@ import glob
 import cv2
 import numpy as np
 import random
+from sklearn.metrics import classification_report, confusion_matrix
 import os
-from tqdm import tqdm 
+#from tqdm import tqdm 
 from .train import find_latest_checkpoint
 import os
 from .data_utils.data_loader import get_image_arr , get_segmentation_arr
@@ -18,7 +19,7 @@ from .models import model_from_name
 import six
 
 random.seed(0)
-class_colors = [  ( random.randint(0,255),random.randint(0,255),random.randint(0,255)   ) for _ in range(5000)  ]
+class_colors = [  ( random.randint(0,80),random.randint(81,160),random.randint(161,255)   ) for _ in range(5000)  ]
 
 
 def model_from_checkpoint_path( checkpoints_path ):
@@ -83,13 +84,14 @@ def predict_multiple( model=None , inps=None , inp_dir=None, out_dir=None , chec
 
 
 	if inps is None and ( not inp_dir is None ):
-		inps = glob.glob( os.path.join(inp_dir,"*.jpg")  ) + glob.glob( os.path.join(inp_dir,"*.png")  ) +  glob.glob( os.path.join(inp_dir,"*.jpeg")  )
+		inps = glob.glob( os.path.join(inp_dir,"*.jpg")  ) + glob.glob( os.path.join(inp_dir,"*.JPG")  ) + glob.glob( os.path.join(inp_dir,"*.png")  ) +  glob.glob( os.path.join(inp_dir,"*.jpeg")  )
 
 	assert type(inps) is list
 	
 	all_prs = []
 
-	for i , inp in enumerate(tqdm(inps)):
+	#for i , inp in enumerate(tqdm(inps)):
+	for i , inp in enumerate(inps):
 		if out_dir is None:
 			out_fname = None
 		else:
@@ -106,19 +108,20 @@ def predict_multiple( model=None , inps=None , inp_dir=None, out_dir=None , chec
 
 
 
-def evaluate( model=None , inp_inmges=None , annotations=None , checkpoints_path=None ):
+def evaluate( model=None , inp_images=None , annotations=None , checkpoints_path=None ):
 	
-	assert False , "not implemented "
+	#assert False , "not implemented "
 
 	ious = []
-	for inp , ann   in tqdm( zip( inp_images , annotations )):
+	#for inp , ann   in tqdm( zip( inp_images , annotations )):
+	for inp , ann   in zip( inp_images , annotations ):
 		pr = predict(model , inp )
 		gt = get_segmentation_arr( ann , model.n_classes ,  model.output_width , model.output_height  )
 		gt = gt.argmax(-1)
+		pr = pr.reshape(-1)
+		#print(confusion_matrix(gt,pr)) #print confusion matrix for each image
 		iou = metrics.get_iou( gt , pr , model.n_classes )
 		ious.append( iou )
 	ious = np.array( ious )
 	print("Class wise IoU "  ,  np.mean(ious , axis=0 ))
 	print("Total  IoU "  ,  np.mean(ious ))
-
-
